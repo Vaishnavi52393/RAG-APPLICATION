@@ -1,0 +1,30 @@
+# Google Cloud Architecture Handbook: Enterprise Modernization & GenAI Standards
+Version 4.2 | Google Cloud Solutions Architecture
+
+1. Cloud Run and Serverless Container Standards
+Google Cloud Run is the recommended serverless execution environment for containerized microservices, APIs, and Generative AI applications (including Streamlit and FastAPI services). Cloud Run automatically scales containers from zero to thousands of instances based on incoming request volume.
+Key architectural specifications for Cloud Run:
+- Concurrency: Defaults to 80 concurrent requests per container instance; maximum of 1,000 for I/O-bound services.
+- Memory & CPU Allocation: Standard configurations allocate 2 vCPUs and 4 GiB to 8 GiB of RAM for RAG vector workloads.
+- Startup CPU Boost: Enables accelerated container cold-start performance by temporarily granting additional vCPUs during container initialization.
+- Maximum Request Timeout: Default is 300 seconds (5 minutes); configurable up to 3,600 seconds (60 minutes) for long-running batch ingestion or large-scale document embedding tasks.
+- Ingress Control: Supports 'All' (public internet), 'Internal' (only VPC networks and Cloud Interconnect), or 'Internal and Cloud Load Balancing' (behind Cloud Armor WAF and custom domains).
+
+2. Zero-Trust Security & Identity Architecture
+Enterprise Google Cloud workloads strictly enforce zero-trust security principles across all tiers:
+- Workload Identity Federation: Eliminates downloadable service account JSON keys. Applications running on GKE or external clouds authenticate to Google APIs via temporary OAuth tokens.
+- Secret Manager: Sensitive environment variables, external credentials, and private tokens must be stored in Google Cloud Secret Manager and mounted as container volume secrets or injected as environment variables.
+- Cloud IAM Least Privilege: Services interacting with Vertex AI and Cloud Storage must be granted narrow roles (e.g., 'roles/aiplatform.user' and 'roles/storage.objectViewer') instead of project-wide Editor or Owner privileges.
+- VPC Service Controls: Establishes a security perimeter around Google Cloud APIs to prevent data exfiltration and unauthorized cross-project data transfers.
+
+3. Cloud Storage & Data Lake Ingestion
+Unstructured document repositories (PDF, DOCX, TXT) destined for RAG pipelines are hosted in Google Cloud Storage (GCS) buckets:
+- Storage Class: 'Standard' storage for active RAG ingestion and retrieval; 'Nearline' or 'Coldline' for document backups and archived revisions older than 90 days.
+- Object Versioning: Must be enabled on knowledge-base buckets to preserve historical versions and prevent accidental deletions.
+- Uniform Bucket-Level Access (UBLA): Mandatory across all corporate data buckets to consolidate ACL management into Cloud IAM.
+- Encryption: All objects are encrypted at rest with Google-managed keys by default, or with Customer-Managed Encryption Keys (CMEK) via Cloud KMS for regulatory compliance.
+
+4. High Availability, Disaster Recovery & Multi-Region Resiliency
+- Compute: Cloud Run multi-region deployments utilize Global External HTTP(S) Load Balancing with Serverless Network Endpoint Groups (NEGs) to distribute traffic across primary (us-central1) and failover (us-east4) regions.
+- Recovery Time Objective (RTO): Target RTO for Tier 1 GenAI services is under 5 minutes through automated health checks and traffic draining.
+- Recovery Point Objective (RPO): Target RPO for vector embeddings and document state is zero for transactional databases and under 15 minutes for asynchronous vector re-indexing pipelines.

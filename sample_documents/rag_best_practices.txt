@@ -1,0 +1,26 @@
+# Enterprise Retrieval-Augmented Generation (RAG) Best Practices & Engineering Guide
+Author: GenAI Architecture CoE | Technical Bulletin 2026
+
+1. Chunking Strategies and Granularity
+The accuracy and recall of semantic search depend fundamentally on document chunking:
+- Fixed-Size Chunking: Splits text every N characters or tokens with an overlap of 10% to 20%. Recommended baseline for general prose: 500 characters with 100 characters overlap.
+- Recursive Character Chunking: Uses hierarchical delimiters (double newlines "\n\n", single newlines "\n", periods ". ", spaces " ") to respect logical paragraphs and sentence boundaries before breaking mid-sentence.
+- Tabular and Structured Data: Tables must NOT be chunked naively by line. Tables should either be serialized into JSON, Markdown tables with headers preserved in every chunk, or converted to natural language key-value sentences.
+- Small-to-Big Retrieval: Store small chunks (128-256 tokens) for fine-grained embedding precision, but attach a pointer to the surrounding parent chunk (512-1024 tokens) or full section to provide rich contextual comprehension to the LLM during generation.
+
+2. Embedding Model Selection and Semantic Search
+- Google Text Embeddings: Models such as 'text-embedding-004' and 'gemini-embedding-2-preview' produce dense vector representations (768 or 1536 dimensions) optimized for information retrieval, clustering, and semantic similarity.
+- Task Type Optimization: In the Google GenAI SDK, explicitly specify 'task_type="RETRIEVAL_DOCUMENT"' when generating embeddings for indexed corpus chunks, and 'task_type="RETRIEVAL_QUERY"' when generating embeddings for the user's search query. This asymmetric embedding boosts top-k precision by up to 18%.
+- Distance Metrics: Cosine similarity or dot product is the standard metric for normalized embeddings. ChromaDB uses cosine distance (1 - cosine similarity) or squared L2 distance.
+- Top-K Selection: Retrieving between 3 and 7 chunks yields the optimal trade-off between recall and prompt token budget. Providing too many chunks (>15) introduces the "Lost in the Middle" effect, where LLMs fail to attend to relevant evidence placed in the middle of long contexts.
+
+3. Strict Hallucination Prevention & Citation Grounding
+Production RAG systems must maintain high trust and avoid hallucinations through deliberate prompt engineering:
+- Negative Constraint: Explicitly instruct the model: "Answer the question ONLY based on the facts provided in the context below. If the retrieved context does not contain sufficient facts to answer the question, state unambiguously: 'The provided documents do not contain information to answer this question.' Never attempt to speculate, infer unstated facts, or use outside training data."
+- Source Traceability: Every claim in the generation must cite its origin using brackets: "[Source: filename, Chunk: #]".
+- Prompt Template Structure: Always position the context chunks BEFORE the user question in the final prompt assembly to reinforce grounding and primacy in the attention layers.
+
+4. Hybrid Search and Vector Store Management
+- ChromaDB Architecture: ChromaDB provides embedded vector persistence with SQLite metadata backing and HNSW (Hierarchical Navigable Small World) index graphs for sub-millisecond approximate nearest neighbor (ANN) retrieval.
+- Hybrid Search: Combining dense semantic vector retrieval with sparse keyword search (BM25 or full-text search) resolves rare alphanumeric codes, SKU numbers, product IDs, and proper nouns that pure semantic embeddings might smooth out.
+- Re-Ranking: Employing a cross-encoder or Gemini flash re-ranking step over the initial top-20 retrieved candidates significantly filters out semantically adjacent but factually irrelevant chunks.

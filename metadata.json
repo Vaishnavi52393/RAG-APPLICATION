@@ -1,0 +1,6 @@
+{
+  "name": "Cloud-Based RAG Document Assistant",
+  "description": "Enterprise Retrieval-Augmented Generation (RAG) assistant powered by Google Gemini, semantic vector embeddings, and strict source citation grounding.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

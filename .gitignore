@@ -1,0 +1,30 @@
+# Dependencies and Build
+node_modules/
+build/
+dist/
+coverage/
+
+# Operating System & Logs
+.DS_Store
+*.log
+
+# Environment & Secrets
+.env*
+!.env.example
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+
+# ChromaDB & Vector Storage
+chroma_db/
+*.parquet
+*.sqlite3
+

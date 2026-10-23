@@ -1,0 +1,23 @@
+# Enterprise Information Security & Data Compliance Policy
+Policy Reference: POL-SEC-2026-v3 | Classification: Restricted Internal
+
+1. Data Classification Tiers
+All digital assets, uploaded documents, vector indices, and LLM chat logs must be tagged according to our four-tier data classification model:
+- Tier 1 (Public): Marketing materials, publicly announced product whitepapers, and public blog posts. No access restrictions.
+- Tier 2 (Internal): Internal architecture guidelines, company newsletters, and team organization charts. Accessible to all verified full-time employees.
+- Tier 3 (Confidential): Customer contract details, proprietary source code repositories, and financial quarterly projections. Requires role-based access control (RBAC) and audited logging.
+- Tier 4 (Restricted / PII / SPI): Personally Identifiable Information (social security numbers, passport numbers, home addresses, banking credentials) and Protected Health Information (PHI). Mandatory field-level AES-256 encryption, tokenization before vector indexing, and zero-storage model invocation.
+
+2. Document Ingestion Rules for GenAI Systems
+- Scrubbing and Redaction: Before chunking and embedding documents into ChromaDB or Vertex AI Vector Search, automated DLP (Data Loss Prevention) scanners must detect and redact Tier 4 PII/SPI patterns.
+- Acceptable File Formats: The ingestion engine supports Portable Document Format (.pdf), plain UTF-8 text (.txt), Markdown (.md), and Microsoft Word OpenXML (.docx). Binary executables, macro-enabled documents (.docm), and zip archives are strictly blocked at the ingestion boundary.
+- File Size Constraints: Individual document uploads are capped at 50 Megabytes (MB). Documents exceeding 500 pages must be processed via asynchronous batch Cloud Run jobs rather than interactive synchronous user sessions.
+
+3. Data Retention and Lifecycle Management
+- Vector Indices: ChromaDB collections and vector indices corresponding to decommissioned projects must be purged within 30 days of project closure.
+- Ephemeral Chat Sessions: Interactive Streamlit user chat sessions and temporary prompt buffers are held in memory only and flushed upon session termination or after 12 hours of inactivity.
+- Audit Logging: All semantic search queries and document ingestion requests must generate structured Cloud Logging records containing: user identity, timestamp (UTC), document hash, query string, number of chunks returned, and model latency metrics.
+
+4. Model Guardrails and Compliance Verification
+- Prohibited Prompts: In accordance with responsible AI standards, user queries attempting prompt injection, jailbreaking, or requesting generation of toxic/harmful instructions must be intercepted by safety filter rules.
+- Grounding Auditability: Every generated response from Gemini must include verifiable source citations referencing exact document names and chunk IDs so human auditors can validate claims against original source text.
